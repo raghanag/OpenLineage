@@ -18,7 +18,6 @@ import org.apache.spark.sql.catalyst.plans.logical.Aggregate;
 import org.apache.spark.sql.catalyst.plans.logical.CreateTableAsSelect;
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
 import org.apache.spark.sql.catalyst.plans.logical.Project;
-import org.apache.spark.sql.catalyst.plans.logical.Union;
 import org.apache.spark.sql.types.IntegerType$;
 import org.apache.spark.sql.types.Metadata$;
 import org.junit.jupiter.api.Test;
@@ -101,9 +100,13 @@ public class FieldDependenciesCollectorTest {
     when(aggr2.resultId()).thenReturn(exprId2);
 
     // BinaryExpression
+    Seq<Expression> children =
+        scala.collection.JavaConverters.collectionAsScalaIterableConverter(
+                Arrays.asList((Expression) aggr1, aggr2))
+            .asScala()
+            .toSeq();
     BinaryExpression binaryExpression = mock(BinaryExpression.class);
-    when(binaryExpression.left()).thenReturn(aggr1);
-    when(binaryExpression.right()).thenReturn(aggr2);
+    when(binaryExpression.children()).thenReturn(children);
 
     ExprId rootAliasExprId = mock(ExprId.class);
     Alias rootAlias =
@@ -123,36 +126,6 @@ public class FieldDependenciesCollectorTest {
 
     verify(builder, times(1)).addDependency(rootAliasExprId, exprId1);
     verify(builder, times(1)).addDependency(rootAliasExprId, exprId2);
-  }
-
-  @Test
-  public void testCollectWithUnion() {
-    Union union =
-        new Union(
-            scala.collection.JavaConverters.collectionAsScalaIterableConverter(
-                    Arrays.asList(
-                        (LogicalPlan)
-                            new Project(
-                                toScalaSeq(Arrays.asList(expression1)), mock(LogicalPlan.class)),
-                        (LogicalPlan)
-                            new Project(
-                                toScalaSeq(Arrays.asList(expression2)), mock(LogicalPlan.class))))
-                .asScala()
-                .toSeq(),
-            true,
-            true);
-
-    Aggregate aggregate =
-        new Aggregate(
-            (Seq<Expression>) Seq$.MODULE$.empty(), toScalaSeq(Arrays.asList(alias1)), union);
-
-    LogicalPlan plan = new CreateTableAsSelect(null, null, null, aggregate, null, null, false);
-
-    FieldDependenciesCollector collector = new FieldDependenciesCollector(plan);
-    collector.collect(builder);
-
-    // first element of a union is treated as an ancestor node
-    verify(builder, times(1)).addDependency(exprId1, exprId2);
   }
 
   private Seq<NamedExpression> toScalaSeq(Collection<NamedExpression> expressions) {

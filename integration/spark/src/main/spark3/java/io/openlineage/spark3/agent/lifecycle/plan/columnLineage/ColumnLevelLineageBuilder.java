@@ -1,10 +1,13 @@
 package io.openlineage.spark3.agent.lifecycle.plan.columnLineage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.openlineage.client.OpenLineage;
 import io.openlineage.spark.agent.util.DatasetIdentifier;
+import io.openlineage.spark.api.OpenLineageContext;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,25 +23,27 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 @Slf4j
-class ColumnLevelLineageBuilder {
+public class ColumnLevelLineageBuilder {
 
-  private Map<ExprId, List<ExprId>> exprDependencies = new HashMap<>();
+  private Map<ExprId, Set<ExprId>> exprDependencies = new HashMap<>();
   private Map<ExprId, List<Pair<DatasetIdentifier, String>>> inputs = new HashMap<>();
   private Map<StructField, ExprId> outputs = new HashMap<>();
   private final StructType schema;
+  private final OpenLineageContext context;
 
-  ColumnLevelLineageBuilder(StructType schema) {
+  ColumnLevelLineageBuilder(StructType schema, OpenLineageContext context) {
     this.schema = schema;
+    this.context = context;
   }
 
-  void addInput(ExprId exprId, DatasetIdentifier datasetIdentifier, String attributeName) {
+  public void addInput(ExprId exprId, DatasetIdentifier datasetIdentifier, String attributeName) {
     if (!inputs.containsKey(exprId)) {
       inputs.put(exprId, new LinkedList<>());
     }
     inputs.get(exprId).add(Pair.of(datasetIdentifier, attributeName));
   }
 
-  void addOutput(ExprId exprId, String attributeName) {
+  public void addOutput(ExprId exprId, String attributeName) {
     Arrays.stream(schema.fields())
         .filter(field -> field.name().equals(attributeName))
         .findAny()
@@ -51,9 +56,9 @@ class ColumnLevelLineageBuilder {
    * @param parent
    * @param child
    */
-  void addDependency(ExprId parent, ExprId child) {
+  public void addDependency(ExprId parent, ExprId child) {
     if (!exprDependencies.containsKey(parent)) {
-      exprDependencies.put(parent, new LinkedList<>());
+      exprDependencies.put(parent, new HashSet<>());
     }
     exprDependencies.get(parent).add(child);
   }
@@ -93,6 +98,40 @@ class ColumnLevelLineageBuilder {
     return sb.toString();
   }
 
+  public OpenLineage.ColumnLineageDatasetFacetFields build() {
+    OpenLineage.ColumnLineageDatasetFacetFieldsBuilder fieldsBuilder =
+        context.getOpenLineage().newColumnLineageDatasetFacetFieldsBuilder();
+
+    Arrays.stream(schema.fields())
+        .map(field -> Pair.of(field, getInputsUsedFor(field.name())))
+        .filter(pair -> !pair.getRight().isEmpty())
+        .map(pair -> Pair.of(pair.getLeft(), facetInputFields(pair.getRight())))
+        .forEach(
+            pair ->
+                fieldsBuilder.put(
+                    pair.getLeft().name(),
+                    context
+                        .getOpenLineage()
+                        .newColumnLineageDatasetFacetFieldsAdditionalBuilder()
+                        .inputFields(pair.getRight())
+                        .build()));
+
+    return fieldsBuilder.build();
+  }
+
+  private List<OpenLineage.ColumnLineageDatasetFacetFieldsAdditionalInputFields> facetInputFields(
+      List<Pair<DatasetIdentifier, String>> inputFields) {
+    return inputFields.stream()
+        .map(
+            field ->
+                new OpenLineage.ColumnLineageDatasetFacetFieldsAdditionalInputFieldsBuilder()
+                    .namespace(field.getLeft().getNamespace())
+                    .name(field.getLeft().getName())
+                    .field(field.getRight())
+                    .build())
+        .collect(Collectors.toList());
+  }
+
   List<Pair<DatasetIdentifier, String>> getInputsUsedFor(String outputName) {
     Optional<StructField> outputField =
         Arrays.stream(schema.fields())
@@ -107,6 +146,7 @@ class ColumnLevelLineageBuilder {
         .filter(inputExprId -> inputs.containsKey(inputExprId))
         .flatMap(inputExprId -> inputs.get(inputExprId).stream())
         .filter(Objects::nonNull)
+        .distinct()
         .collect(Collectors.toList());
   }
 

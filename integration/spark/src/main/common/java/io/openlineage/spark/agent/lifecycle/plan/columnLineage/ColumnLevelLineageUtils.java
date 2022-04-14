@@ -26,12 +26,14 @@ public class ColumnLevelLineageUtils {
                     "io.openlineage.spark3.agent.lifecycle.plan.columnLineage.ColumnLevelLineageUtils")
                 .getMethod(
                     "buildColumnLineageDatasetFacet", OpenLineageContext.class, StructType.class)
-                .invoke(context, schema);
+                .invoke(null, context, schema);
       } catch (ClassNotFoundException
           | NoSuchMethodException
           | IllegalAccessException
+          | IllegalArgumentException
           | InvocationTargetException e) {
-        log.error("Error when invoking static method 'buildColumnLineageDatasetFacet' for Spark3");
+        log.error(
+            "Error when invoking static method 'buildColumnLineageDatasetFacet' for Spark3", e);
         return Optional.empty();
       } catch (RuntimeException e) {
         log.error("Error when building column level lineage", e);

@@ -191,6 +191,11 @@ public class SparkContainerIntegrationTest {
         "pysparkCTASEnd.json",
         "pysparkLoadStart.json",
         "pysparkLoadComplete.json");
+
+    if (System.getProperty("spark.version").matches(SPARK_3)) {
+      // verify CTAS contains column level lineage
+      verifyEvents("pysparkCTASWithColumnLineageEnd.json");
+    }
   }
 
   @Test
@@ -235,17 +240,27 @@ public class SparkContainerIntegrationTest {
   @ParameterizedTest
   @CsvSource(
       value = {
-        "spark_v2_create.py:pysparkV2CreateTableStartEvent.json:pysparkV2CreateTableCompleteEvent.json:true",
-        "spark_v2_create_as_select.py:pysparkV2CreateTableAsSelectStartEvent.json:pysparkV2CreateTableAsSelectCompleteEvent.json:true",
-        "spark_v2_overwrite_by_expression.py:pysparkV2OverwriteByExpressionStartEvent.json:pysparkV2OverwriteByExpressionCompleteEvent.json:true",
-        "spark_v2_overwrite_partitions.py:pysparkV2OverwritePartitionsStartEvent.json:pysparkV2OverwritePartitionsCompleteEvent.json:true",
-        "spark_v2_replace_table_as_select.py:pysparkV2ReplaceTableAsSelectStartEvent.json:pysparkV2ReplaceTableAsSelectCompleteEvent.json:true",
-        "spark_v2_replace_table.py:pysparkV2ReplaceTableStartEvent.json:pysparkV2ReplaceTableCompleteEvent.json:false",
-        "spark_v2_delete.py:pysparkV2DeleteStartEvent.json:pysparkV2DeleteCompleteEvent.json:true",
-        "spark_v2_update.py:pysparkV2UpdateStartEvent.json:pysparkV2UpdateCompleteEvent.json:true",
+        //
+        // "spark_v2_create.py:pysparkV2CreateTableStartEvent.json:pysparkV2CreateTableCompleteEvent.json:true",
+        //
+        // "spark_v2_create_as_select.py:pysparkV2CreateTableAsSelectStartEvent.json:pysparkV2CreateTableAsSelectCompleteEvent.json:true",
+        //
+        // "spark_v2_overwrite_by_expression.py:pysparkV2OverwriteByExpressionStartEvent.json:pysparkV2OverwriteByExpressionCompleteEvent.json:true",
+        //
+        // "spark_v2_overwrite_partitions.py:pysparkV2OverwritePartitionsStartEvent.json:pysparkV2OverwritePartitionsCompleteEvent.json:true",
+        //
+        // "spark_v2_replace_table_as_select.py:pysparkV2ReplaceTableAsSelectStartEvent.json:pysparkV2ReplaceTableAsSelectCompleteEvent.json:true",
+        //
+        // "spark_v2_replace_table.py:pysparkV2ReplaceTableStartEvent.json:pysparkV2ReplaceTableCompleteEvent.json:false",
+        //
+        // "spark_v2_delete.py:pysparkV2DeleteStartEvent.json:pysparkV2DeleteCompleteEvent.json:true",
+        //
+        // "spark_v2_update.py:pysparkV2UpdateStartEvent.json:pysparkV2UpdateCompleteEvent.json:true",
         "spark_v2_merge_into_table.py:pysparkV2MergeIntoTableStartEvent.json:pysparkV2MergeIntoTableCompleteEvent.json:true",
-        "spark_v2_drop.py:pysparkV2DropTableStartEvent.json:pysparkV2DropTableCompleteEvent.json:true",
-        "spark_v2_append.py:pysparkV2AppendDataStartEvent.json:pysparkV2AppendDataCompleteEvent.json:true",
+        //
+        // "spark_v2_drop.py:pysparkV2DropTableStartEvent.json:pysparkV2DropTableCompleteEvent.json:true",
+        //
+        // "spark_v2_append.py:pysparkV2AppendDataStartEvent.json:pysparkV2AppendDataCompleteEvent.json:true",
       },
       delimiter = ':')
   public void testV2Commands(

@@ -88,8 +88,6 @@ public class ColumnLevelLineageUtilsV2CatalogTest {
             .build();
 
     FileSystem.get(spark.sparkContext().hadoopConfiguration())
-        .delete(new Path("spark-warehouse"), true);
-    FileSystem.get(spark.sparkContext().hadoopConfiguration())
         .delete(new Path("/tmp/column_level_lineage/"), true);
 
     spark.sql("DROP TABLE IF EXISTS local.db.t1");
@@ -221,6 +219,8 @@ public class ColumnLevelLineageUtilsV2CatalogTest {
     assertColumnDependsOn(facet, "c", "file", "/tmp/column_level_lineage/db.t1", "b");
     assertColumnDependsOn(facet, "d", "file", "/tmp/column_level_lineage/db.t1", "a");
     assertColumnDependsOn(facet, "d", "file", "/tmp/column_level_lineage/db.t1", "b");
+    assertColumnDependsOnInputs(facet, "c", 2);
+    assertColumnDependsOnInputs(facet, "d", 2);
   }
 
   @Test
@@ -244,6 +244,7 @@ public class ColumnLevelLineageUtilsV2CatalogTest {
 
     assertColumnDependsOn(facet, "c", "file", "/tmp/column_level_lineage/db.t1", "a");
     assertColumnDependsOn(facet, "c", "file", "/tmp/column_level_lineage/db.t2", "a");
+    assertColumnDependsOnInputs(facet, "c", 2);
   }
 
   @Test
@@ -287,6 +288,8 @@ public class ColumnLevelLineageUtilsV2CatalogTest {
 
     assertColumnDependsOn(facet, "c", "file", "/tmp/column_level_lineage/db.t1", "a");
     assertColumnDependsOn(facet, "d", "file", "/tmp/column_level_lineage/db.t1", "b");
+    assertColumnDependsOnInputs(facet, "c", 1);
+    assertColumnDependsOnInputs(facet, "d", 1);
   }
 
   private void assertColumnDependsOn(
@@ -296,15 +299,22 @@ public class ColumnLevelLineageUtilsV2CatalogTest {
       String expectedName,
       String expectedInputField) {
 
-    facet.getFields().getAdditionalProperties().get(outputColumn).stream()
-        .forEach(e -> log.info("{}:{}:{}", e.getNamespace(), e.getName(), e.getField()));
-
     assertTrue(
-        facet.getFields().getAdditionalProperties().get(outputColumn).stream()
+        facet.getFields().getAdditionalProperties().get(outputColumn).getInputFields().stream()
             .filter(f -> f.getNamespace().equalsIgnoreCase(expectedNamespace))
             .filter(f -> f.getName().equals(expectedName))
             .filter(f -> f.getField().equalsIgnoreCase(expectedInputField))
             .findAny()
             .isPresent());
+  }
+
+  private void assertColumnDependsOnInputs(
+      OpenLineage.ColumnLineageDatasetFacet facet,
+      String outputColumn,
+      int expectedAmountOfInputs) {
+
+    assertEquals(
+        expectedAmountOfInputs,
+        facet.getFields().getAdditionalProperties().get(outputColumn).getInputFields().size());
   }
 }
