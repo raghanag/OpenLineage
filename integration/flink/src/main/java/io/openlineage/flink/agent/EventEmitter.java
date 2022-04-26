@@ -56,7 +56,7 @@ public class EventEmitter {
   public void emit(OpenLineage.RunEvent event) {
     try {
       // Todo: move to async client
-      log.debug("Posting LineageEvent {}", event);
+      log.info("Posting LineageEvent {}", event);
       ResponseMessage resp = client.post(lineageURI, event);
       if (!resp.completedSuccessfully()) {
         //        log.error(

@@ -39,7 +39,6 @@ shadowJar {
 }
 
 dependencies {
-    compile project(':')
     configurations.all {
         exclude module: 'slf4j-log4j12'
         exclude module: 'log4j'
@@ -76,5 +75,7 @@ avro {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform({
+        excludeTags 'integration-test'
+    })
 }
