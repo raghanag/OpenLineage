@@ -28,15 +28,19 @@ public class ArgumentParser {
   private final String host;
   private final String version;
   private final String namespace;
+  private final String owner;
   private final String jobName;
   private final String parentRunId;
   private final Optional<String> apiKey;
   private final Optional<Map<String, String>> urlParams;
 
   public static ArgumentParser parse(String clientUrl) {
+    return parse(clientUrl, "anonymous");
+  }
+
+  public static ArgumentParser parse(String clientUrl, String owner) {
     URI uri = URI.create(clientUrl);
     String host = uri.getScheme() + "://" + uri.getAuthority();
-
     String path = uri.getPath();
     String[] elements = path.split("/");
     String version = get(elements, "api", 1, DEFAULTS.getVersion());
@@ -52,7 +56,7 @@ public class ArgumentParser {
         String.format(
             "%s/api/%s/namespaces/%s/jobs/%s/runs/%s", host, version, namespace, jobName, runId));
 
-    return new ArgumentParser(host, version, namespace, jobName, runId, apiKey, urlParams);
+    return new ArgumentParser(host, version, namespace, owner, jobName, runId, apiKey, urlParams);
   }
 
   public static UUID getRandomUuid() {
@@ -102,6 +106,6 @@ public class ArgumentParser {
 
   private static ArgumentParser getDefaultArguments() {
     return new ArgumentParser(
-        "", "v1", "default", "default", null, Optional.empty(), Optional.empty());
+        "", "v1", "default", "anonymous", "default", null, Optional.empty(), Optional.empty());
   }
 }

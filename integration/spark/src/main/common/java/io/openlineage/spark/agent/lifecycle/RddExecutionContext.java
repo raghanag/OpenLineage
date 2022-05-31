@@ -203,13 +203,14 @@ class RddExecutionContext implements ExecutionContext {
         ol.newRunEventBuilder()
             .eventTime(toZonedTime(jobStart.time()))
             .eventType(OpenLineage.RunEvent.EventType.START)
+                .owner(sparkContext.getOwner())
             .inputs(buildInputs(inputs))
             .outputs(buildOutputs(outputs))
             .run(ol.newRunBuilder().runId(runId).facets(buildRunFacets(null)).build())
             .job(buildJob(jobStart.jobId()))
             .build();
 
-    log.debug("Posting event for start {}: {}", jobStart, event);
+    log.info("Posting event for start {}: {}", jobStart, event);
     sparkContext.emit(event);
   }
 
@@ -220,6 +221,7 @@ class RddExecutionContext implements ExecutionContext {
         ol.newRunEventBuilder()
             .eventTime(toZonedTime(jobEnd.time()))
             .eventType(getEventType(jobEnd.jobResult()))
+                .owner(sparkContext.getOwner())
             .inputs(buildInputs(inputs))
             .outputs(buildOutputs(outputs))
             .run(
@@ -230,7 +232,7 @@ class RddExecutionContext implements ExecutionContext {
             .job(buildJob(jobEnd.jobId()))
             .build();
 
-    log.debug("Posting event for end {}: {}", jobEnd, event);
+    log.info("Posting event for end {}: {}", jobEnd, event);
     sparkContext.emit(event);
   }
 

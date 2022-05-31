@@ -67,7 +67,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    api("io.openlineage:openlineage-java:${project.version}")
+    api("io.openlineage:openlineage-java:0.8.1-SNAPSHOT")
 
     implementation 'org.javassist:javassist:3.27.0-GA'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.3'

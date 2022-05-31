@@ -17,12 +17,14 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public class EventEmitter {
   @Getter private OpenLineageClient client;
   @Getter private URI lineageURI;
   @Getter private String jobNamespace;
+  @Getter private String owner;
   @Getter private String parentJobName;
   @Getter private Optional<UUID> parentRunId;
 
@@ -46,8 +48,14 @@ public class EventEmitter {
     String uriPath = String.format("/api/%s/lineage", argument.getVersion());
 
     this.lineageURI =
-        new URI(hostURI.getScheme(), hostURI.getAuthority(), uriPath, queryParams, null);
-    this.jobNamespace = argument.getNamespace();
+        new URI(
+            hostURI.getScheme(),
+            hostURI.getAuthority(),
+            hostURI.getPath() + uriPath,
+            queryParams,
+            null);
+    this.jobNamespace = argument.getOwner().toLowerCase() + StringUtils.capitalize(argument.getNamespace());
+    this.owner = argument.getOwner();
     this.parentJobName = argument.getJobName();
     this.parentRunId = convertToUUID(argument.getParentRunId());
     log.info(
@@ -58,7 +66,7 @@ public class EventEmitter {
   public void emit(OpenLineage.RunEvent event) {
     try {
       // Todo: move to async client
-      log.debug("Posting LineageEvent {}", event);
+      log.info("Posting LineageEvent {}", event);
       ResponseMessage resp = client.post(lineageURI, event);
       if (!resp.completedSuccessfully()) {
         log.error(

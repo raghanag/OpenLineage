@@ -53,7 +53,7 @@ class SparkSQLExecutionContext implements ExecutionContext {
   }
 
   public void start(SparkListenerSQLExecutionStart startEvent) {
-    log.debug("SparkListenerSQLExecutionStart - executionId: {}", startEvent.executionId());
+    log.info("SparkListenerSQLExecutionStart - executionId: {}", startEvent.executionId());
     if (!olContext.getQueryExecution().isPresent()) {
       log.info("No execution info {}", olContext);
       return;
@@ -61,16 +61,16 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(toZonedTime(startEvent.time())),
+            openLineage.newRunEventBuilder().eventTime(toZonedTime(startEvent.time())).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             startEvent);
 
-    log.debug("Posting event for start {}: {}", executionId, event);
+    log.info("Posting event for start {}: {}", executionId, event);
     eventEmitter.emit(event);
   }
 
   public void end(SparkListenerSQLExecutionEnd endEvent) {
-    log.debug("SparkListenerSQLExecutionEnd - executionId: {}", endEvent.executionId());
+    log.info("SparkListenerSQLExecutionEnd - executionId: {}", endEvent.executionId());
     // TODO: can we get failed event here?
     // If not, then we probably need to use this only for LogicalPlans that emit no Job events.
     // Maybe use QueryExecutionListener?
@@ -81,11 +81,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(toZonedTime(endEvent.time())),
+            openLineage.newRunEventBuilder().eventTime(toZonedTime(endEvent.time())).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             endEvent);
 
-    log.debug("Posting event for end {}: {}", executionId, event);
+    log.info("Posting event for end {}: {}", executionId, event);
     eventEmitter.emit(event);
   }
 
@@ -99,11 +99,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(ZonedDateTime.now(ZoneOffset.UTC)),
+            openLineage.newRunEventBuilder().eventTime(ZonedDateTime.now(ZoneOffset.UTC)).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             stageSubmitted);
 
-    log.debug("Posting event for stage submitted {}: {}", executionId, event);
+    log.info("Posting event for stage submitted {}: {}", executionId, event);
     eventEmitter.emit(event);
   }
 
@@ -117,11 +117,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(ZonedDateTime.now(ZoneOffset.UTC)),
+            openLineage.newRunEventBuilder().eventTime(ZonedDateTime.now(ZoneOffset.UTC)).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             stageCompleted);
 
-    log.debug("Posting event for stage completed {}: {}", executionId, event);
+    log.info("Posting event for stage completed {}: {}", executionId, event);
 
     eventEmitter.emit(event);
   }
@@ -133,7 +133,7 @@ class SparkSQLExecutionContext implements ExecutionContext {
 
   @Override
   public void start(SparkListenerJobStart jobStart) {
-    log.debug("SparkListenerJobStart - executionId: " + executionId);
+    log.info("SparkListenerJobStart - executionId: " + executionId);
     jobId = Optional.of(jobStart.jobId());
     if (!olContext.getQueryExecution().isPresent()) {
       log.info("No execution info {}", olContext);
@@ -142,17 +142,17 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(toZonedTime(jobStart.time())),
+            openLineage.newRunEventBuilder().eventTime(toZonedTime(jobStart.time())).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             jobStart);
 
-    log.debug("Posting event for start {}: {}", executionId, event);
+    log.info("Posting event for start {}: {}", executionId, event);
     eventEmitter.emit(event);
   }
 
   @Override
   public void end(SparkListenerJobEnd jobEnd) {
-    log.debug("SparkListenerJobEnd - executionId: " + executionId);
+    log.info("SparkListenerJobEnd - executionId: " + executionId);
     jobId = Optional.of(jobEnd.jobId());
     if (!finished.compareAndSet(false, true)) {
       log.debug("Event already finished, returning");
@@ -166,11 +166,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
     RunEvent event =
         runEventBuilder.buildRun(
             buildParentFacet(),
-            openLineage.newRunEventBuilder().eventTime(toZonedTime(jobEnd.time())),
+            openLineage.newRunEventBuilder().eventTime(toZonedTime(jobEnd.time())).owner(eventEmitter.getOwner()),
             buildJob(olContext.getQueryExecution().get()),
             jobEnd);
 
-    log.debug("Posting event for end {}: {}", executionId, event);
+    log.info("Posting event for end {}: {}", executionId, event);
     eventEmitter.emit(event);
   }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openlineage.io/spec/1-0-2/OpenLineage.json",
+  "$id": "https://openlineage.io/spec/1-0-3/OpenLineage.json",
   "$defs": {
     "RunEvent": {
       "type": "object",
@@ -21,6 +21,11 @@
           "description": "the time the event occurred at",
           "type": "string",
           "format": "date-time"
+        },
+        "owner": {
+          "description": "owner of the namespace the job belongs to",
+          "type": "string",
+          "example": "anonymous"
         },
         "run": {
           "$ref": "#/$defs/Run"

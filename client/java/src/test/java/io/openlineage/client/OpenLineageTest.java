@@ -52,12 +52,13 @@ public class OpenLineageTest {
     Run run = ol.newRun(runId, runFacets);
     String name = "jobName";
     String namespace = "namespace";
+    String owner = "anonymous";
     JobFacets jobFacets = ol.newJobFacetsBuilder().build();
     Job job = ol.newJob(namespace, name, jobFacets);
     List<InputDataset> inputs = Arrays.asList(ol.newInputDataset("ins", "input", null, null));
     List<OutputDataset> outputs = Arrays.asList(ol.newOutputDataset("ons", "output", null, null));
     RunEvent runStateUpdate =
-        ol.newRunEvent(OpenLineage.RunEvent.EventType.START, now, run, job, inputs, outputs);
+        ol.newRunEvent(OpenLineage.RunEvent.EventType.START, now, owner, run, job, inputs, outputs);
 
     String json = mapper.writeValueAsString(runStateUpdate);
     RunEvent read = mapper.readValue(json, RunEvent.class);
