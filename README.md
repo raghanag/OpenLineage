@@ -19,7 +19,7 @@
 ## Overview
 OpenLineage is an Open standard for metadata and lineage collection designed to instrument jobs as they are running.
 It defines a generic model of run, job, and dataset entities identified using consistent naming strategies.
-The core lineage model is extensible by defining specific facets to enrich those entities.
+The core lineage model is extensible by defining specific facets to enrich those entities..
 
 ## Status
 
